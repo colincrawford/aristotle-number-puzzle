@@ -42,7 +42,7 @@ func rowToString(row []GamePiece) string {
 	return rowStr
 }
 
-func BoardToString(board Board) string {
+func BoardToString(board *Board) string {
 	str := ""
 	str += fmt.Sprintf("  %s\n", rowToString(board.Row1[:]))
 	str += fmt.Sprintf(" %s\n", rowToString(board.Row2[:]))
@@ -52,7 +52,7 @@ func BoardToString(board Board) string {
 	return str
 }
 
-func PrintBoard(board Board) {
+func PrintBoard(board *Board) {
 	fmt.Println(BoardToString(board))
 }
 
@@ -72,7 +72,7 @@ func InitBoard() Board {
 	return board
 }
 
-func getPosition(board Board, position BoardPosition) GamePiece {
+func getPosition(board *Board, position *BoardPosition) GamePiece {
 	row := getRow(board, position.Row)
 	return row[position.Position]
 }
@@ -90,7 +90,7 @@ func getRowLen(row int) int {
 	}
 }
 
-func getRow(board Board, n int) []GamePiece {
+func getRow(board *Board, n int) []GamePiece {
 	switch n {
 	case 1:
 		return board.Row1[:]
@@ -107,9 +107,9 @@ func getRow(board Board, n int) []GamePiece {
 	}
 }
 
-func removeEmptyPieces(pieces []GamePiece) []GamePiece {
+func removeEmptyPieces(pieces *[]GamePiece) []GamePiece {
 	validPieces := []GamePiece{}
-	for _, piece := range pieces {
+	for _, piece := range *pieces {
 		if piece.Filled {
 			validPieces = append(validPieces, piece)
 		}
@@ -118,14 +118,14 @@ func removeEmptyPieces(pieces []GamePiece) []GamePiece {
 }
 
 // The horizontal row for any given board position
-func getPrevHorizontalRowPieces(board Board, position BoardPosition) []GamePiece {
+func getPrevHorizontalRowPieces(board *Board, position *BoardPosition) []GamePiece {
 	row := getRow(board, position.Row)
-	return removeEmptyPieces(row)
+	return row[0:(position.Position + 1)]
 }
 
 // The diagonal row starting from the top and going down / left
 // for a given board position
-func getPrevLeftDiagRowPieces(board Board, position BoardPosition) []GamePiece {
+func getPrevLeftDiagRowPieces(board *Board, position *BoardPosition) []GamePiece {
 	if position.Row == 1 {
 		return []GamePiece{}
 	}
@@ -145,7 +145,7 @@ func getPrevLeftDiagRowPieces(board Board, position BoardPosition) []GamePiece {
 
 // The diagonal row starting from the top and going down / right
 // for a given board position
-func getPrevRightDiagRowPieces(board Board, position BoardPosition) []GamePiece {
+func getPrevRightDiagRowPieces(board *Board, position *BoardPosition) []GamePiece {
 	if position.Row == 1 {
 		return []GamePiece{}
 	}
@@ -161,18 +161,18 @@ func getPrevRightDiagRowPieces(board Board, position BoardPosition) []GamePiece 
 	return previousPieces
 }
 
-func allPieces(board Board) []GamePiece {
+func allPieces(board *Board) []GamePiece {
 	rows := [][]GamePiece{board.Row1[:], board.Row2[:], board.Row3[:], board.Row4[:], board.Row5[:]}
 	pieces := []GamePiece{}
 	for _, row := range rows {
-		pieces = append(pieces, removeEmptyPieces(row)...)
+		pieces = append(pieces, removeEmptyPieces(&row)...)
 	}
 	return pieces
 }
 
-func rowSum(pieces []GamePiece) int {
+func rowSum(pieces *[]GamePiece) int {
 	total := 0
-	for _, piece := range pieces {
+	for _, piece := range *pieces {
 		total += piece.Value
 	}
 	return total
@@ -180,7 +180,7 @@ func rowSum(pieces []GamePiece) int {
 
 // Get the valid pieces for a board position
 // given the pieces currently in a board
-func GetValidMoves(board Board, position BoardPosition) []GamePiece {
+func GetValidMoves(board *Board, position *BoardPosition) []GamePiece {
 	previousPieces := allPieces(board)
 	usedPieces := make(map[int]bool)
 	for _, piece := range previousPieces {
@@ -208,18 +208,18 @@ func GetValidMoves(board Board, position BoardPosition) []GamePiece {
 	return validMoves
 }
 
-func SetPosition(board Board, position BoardPosition, move GamePiece) Board {
+func SetPosition(board *Board, position *BoardPosition, move *GamePiece) Board {
 	switch position.Row {
 	case 1:
-		board.Row1[position.Position] = move
+		board.Row1[position.Position] = *move
 	case 2:
-		board.Row2[position.Position] = move
+		board.Row2[position.Position] = *move
 	case 3:
-		board.Row3[position.Position] = move
+		board.Row3[position.Position] = *move
 	case 4:
-		board.Row4[position.Position] = move
+		board.Row4[position.Position] = *move
 	case 5:
-		board.Row5[position.Position] = move
+		board.Row5[position.Position] = *move
 	}
 	return board
 }

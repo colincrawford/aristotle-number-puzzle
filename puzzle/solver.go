@@ -20,7 +20,7 @@ func getAllPositions() [19]BoardPosition {
 
 var positions = getAllPositions()
 
-func getNextPosition(position BoardPosition) (bool, BoardPosition) {
+func getNextPosition(position *BoardPosition) (bool, BoardPosition) {
 	rowLen := getRowLen(position.Row)
 	incPos := position.Position + 1
 	if incPos == rowLen {
@@ -34,12 +34,11 @@ func getNextPosition(position BoardPosition) (bool, BoardPosition) {
 
 func SolvePuzzle() Board {
 	board := InitBoard()
-	board.Row1[0] = GamePiece{true, 6}
-	_, solvedBoard := solve(board, BoardPosition{1, 1})
+	_, solvedBoard := solve(board, BoardPosition{1, 0})
 	return solvedBoard
 }
 
-func solve(board Board, position BoardPosition) (bool, Board) {
+func solve(board *Board, position *BoardPosition) (bool, Board) {
 	hasNextMove, nextPosition := getNextPosition(position)
 
 	if !hasNextMove {
