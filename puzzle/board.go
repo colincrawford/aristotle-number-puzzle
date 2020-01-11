@@ -9,6 +9,12 @@ type GamePiece struct {
 	Value  int
 }
 
+// A specific spot in the board
+type BoardPosition struct {
+	Row    int
+	Column int
+}
+
 // The game board is a hexagonal type shape
 // with 19 total pieces.
 // Ex:
@@ -18,11 +24,7 @@ type GamePiece struct {
 //   12 13 14 15
 //    16 17 18
 type Board struct {
-	Row1 [3]GamePiece
-	Row2 [4]GamePiece
-	Row3 [5]GamePiece
-	Row4 [4]GamePiece
-	Row5 [3]GamePiece
+	Rows [][5]GamePiece
 }
 
 const (
@@ -43,12 +45,11 @@ func rowToString(row []GamePiece) string {
 }
 
 func BoardToString(board *Board) string {
+	spaces := []string{"  ", " ", "", " ", " "}
 	str := ""
-	str += fmt.Sprintf("  %s\n", rowToString(board.Row1[:]))
-	str += fmt.Sprintf(" %s\n", rowToString(board.Row2[:]))
-	str += fmt.Sprintf("%s\n", rowToString(board.Row3[:]))
-	str += fmt.Sprintf(" %s\n", rowToString(board.Row4[:]))
-	str += fmt.Sprintf("  %s\n", rowToString(board.Row5[:]))
+	for i, row := range board.Rows {
+		str += fmt.Sprintf("%s%s\n", spaces[i], rowToString(board))
+	}
 	return str
 }
 
@@ -56,19 +57,11 @@ func PrintBoard(board *Board) {
 	fmt.Println(BoardToString(board))
 }
 
-// A specific spot in the board
-type BoardPosition struct {
-	Row      int
-	Position int
-}
-
 func InitBoard() Board {
 	board := Board{}
-	board.Row1 = [3]GamePiece{}
-	board.Row2 = [4]GamePiece{}
-	board.Row3 = [5]GamePiece{}
-	board.Row4 = [4]GamePiece{}
-	board.Row5 = [3]GamePiece{}
+	for i := 0; i < 5; i++ {
+		board[i] = [3]GamePiece{}
+	}
 	return board
 }
 
@@ -77,34 +70,8 @@ func getPosition(board *Board, position *BoardPosition) GamePiece {
 	return row[position.Position]
 }
 
-func getRowLen(row int) int {
-	switch row {
-	case 1, 5:
-		return 3
-	case 2, 4:
-		return 4
-	case 3:
-		return 5
-	default:
-		panic(fmt.Sprintf("%v is not a valid row", row))
-	}
-}
-
 func getRow(board *Board, n int) []GamePiece {
-	switch n {
-	case 1:
-		return board.Row1[:]
-	case 2:
-		return board.Row2[:]
-	case 3:
-		return board.Row3[:]
-	case 4:
-		return board.Row4[:]
-	case 5:
-		return board.Row5[:]
-	default:
-		panic(fmt.Sprintf("%v is not a valid row", n))
-	}
+	return board[n]
 }
 
 func removeEmptyPieces(pieces *[]GamePiece) []GamePiece {
@@ -161,13 +128,14 @@ func getPrevRightDiagRowPieces(board *Board, position *BoardPosition) []GamePiec
 	return previousPieces
 }
 
-func allPieces(board *Board) []GamePiece {
-	rows := [][]GamePiece{board.Row1[:], board.Row2[:], board.Row3[:], board.Row4[:], board.Row5[:]}
-	pieces := []GamePiece{}
+func getUsedPieces(board *Board) map[int]bool {
+	seenPieces := make(map[int]bool)
 	for _, row := range rows {
-		pieces = append(pieces, removeEmptyPieces(&row)...)
+		for _, piece := range row {
+			seenPieces[piece.Value] = true
+		}
 	}
-	return pieces
+	return seenPieces
 }
 
 func rowSum(pieces *[]GamePiece) int {
@@ -178,48 +146,51 @@ func rowSum(pieces *[]GamePiece) int {
 	return total
 }
 
+func getPiecesLte(min int) []GamePiece {
+	pieces := []GamePiece{}
+	for i := MinPieceValue; i <= min; i++ {
+		append(pieces, GamePiece{true, i})
+	}
+	return pieces
+}
+
+func max(nums ...int) {
+	n := nums[0]
+	for _, num := range nums[1:] {
+		if num > n {
+			n = num
+		}
+	}
+	return num
+}
+
 // Get the valid pieces for a board position
 // given the pieces currently in a board
 func GetValidMoves(board *Board, position *BoardPosition) []GamePiece {
-	previousPieces := allPieces(board)
-	usedPieces := make(map[int]bool)
-	for _, piece := range previousPieces {
-		usedPieces[piece.Value] = true
-	}
+	usedPieces := getUsedPieces(board)
+
+	// get the sum of each of the three rows for this position
 	horizontalRowSum := rowSum(getPrevHorizontalRowPieces(board, position))
 	leftDiagRowSum := rowSum(getPrevLeftDiagRowPieces(board, position))
 	rightDiagRowSum := rowSum(getPrevRightDiagRowPieces(board, position))
+
+	// the highest of those constrains the possible pieces in this position
+	highestRowSum := max(horizontalRowSum, rightDiagRowSum, leftDiagRowSum)
+	possibleMoves = getPiecesLte(TargetRowSum - highestRowSum)
+
+	// remove the moves we've already used
 	validMoves := []GamePiece{}
-	for i := MinPieceValue; i <= MaxPieceValue; i++ {
+	for _, possibleMove := range possibleMoves {
 		if usedPieces[i] {
 			continue
 		}
-		if (horizontalRowSum + i) > TargetRowSum {
-			continue
-		}
-		if (leftDiagRowSum + i) > TargetRowSum {
-			continue
-		}
-		if (rightDiagRowSum + i) > TargetRowSum {
-			continue
-		}
-		validMoves = append(validMoves, GamePiece{true, i})
+		validMoves = append(validMoves, possibleMove)
 	}
+
 	return validMoves
 }
 
 func SetPosition(board *Board, position *BoardPosition, move *GamePiece) Board {
-	switch position.Row {
-	case 1:
-		board.Row1[position.Position] = *move
-	case 2:
-		board.Row2[position.Position] = *move
-	case 3:
-		board.Row3[position.Position] = *move
-	case 4:
-		board.Row4[position.Position] = *move
-	case 5:
-		board.Row5[position.Position] = *move
-	}
+	board[position.Row][position.Column] = move
 	return board
 }
