@@ -24,7 +24,7 @@ type BoardPosition struct {
 //   12 13 14 15
 //    16 17 18
 type Board struct {
-	Rows [][5]GamePiece
+	Rows [5][]GamePiece
 }
 
 const (
@@ -48,7 +48,7 @@ func BoardToString(board *Board) string {
 	spaces := []string{"  ", " ", "", " ", " "}
 	str := ""
 	for i, row := range board.Rows {
-		str += fmt.Sprintf("%s%s\n", spaces[i], rowToString(board))
+		str += fmt.Sprintf("%s%s\n", spaces[i], rowToString(row))
 	}
 	return str
 }
