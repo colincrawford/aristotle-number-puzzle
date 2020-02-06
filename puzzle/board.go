@@ -60,18 +60,18 @@ func PrintBoard(board *Board) {
 func InitBoard() Board {
 	board := Board{}
 	for i := 0; i < 5; i++ {
-		board[i] = [3]GamePiece{}
+		board.Rows[i] = []GamePiece{}
 	}
 	return board
 }
 
 func getPosition(board *Board, position *BoardPosition) GamePiece {
 	row := getRow(board, position.Row)
-	return row[position.Position]
+	return row[position.Column]
 }
 
 func getRow(board *Board, n int) []GamePiece {
-	return board[n]
+	return board.Rows[n]
 }
 
 func removeEmptyPieces(pieces *[]GamePiece) []GamePiece {
@@ -87,7 +87,7 @@ func removeEmptyPieces(pieces *[]GamePiece) []GamePiece {
 // The horizontal row for any given board position
 func getPrevHorizontalRowPieces(board *Board, position *BoardPosition) []GamePiece {
 	row := getRow(board, position.Row)
-	return row[0:(position.Position + 1)]
+	return row[0:(position.Column + 1)]
 }
 
 // The diagonal row starting from the top and going down / left
@@ -100,12 +100,12 @@ func getPrevLeftDiagRowPieces(board *Board, position *BoardPosition) []GamePiece
 	previousPieces := []GamePiece{}
 	previousRow := position.Row - 1
 	previousRowLength := len(getRow(board, previousRow))
-	previousPosition := position.Position + 1
+	previousPosition := position.Column + 1
 	for (previousRow > 0) && (previousPosition < previousRowLength) {
-		previousPieces = append(previousPieces, getPosition(board, BoardPosition{previousRow, previousPosition}))
+		previousPieces = append(previousPieces, getPosition(board, &BoardPosition{previousRow, previousPosition}))
 		previousRow = position.Row - 1
 		previousRowLength = len(getRow(board, previousRow))
-		previousPosition = position.Position + 1
+		previousPosition = position.Column + 1
 	}
 	return previousPieces
 }
@@ -119,18 +119,18 @@ func getPrevRightDiagRowPieces(board *Board, position *BoardPosition) []GamePiec
 
 	previousPieces := []GamePiece{}
 	previousRow := position.Row - 1
-	previousPosition := position.Position - 1
+	previousPosition := position.Column - 1
 	for (previousRow > 0) && (previousPosition >= 0) {
-		previousPieces = append(previousPieces, getPosition(board, BoardPosition{previousRow, previousPosition}))
+		previousPieces = append(previousPieces, getPosition(board, &BoardPosition{previousRow, previousPosition}))
 		previousRow = position.Row - 1
-		previousPosition = position.Position - 1
+		previousPosition = position.Column - 1
 	}
 	return previousPieces
 }
 
 func getUsedPieces(board *Board) map[int]bool {
 	seenPieces := make(map[int]bool)
-	for _, row := range rows {
+	for _, row := range board.Rows {
 		for _, piece := range row {
 			seenPieces[piece.Value] = true
 		}
@@ -149,19 +149,19 @@ func rowSum(pieces *[]GamePiece) int {
 func getPiecesLte(min int) []GamePiece {
 	pieces := []GamePiece{}
 	for i := MinPieceValue; i <= min; i++ {
-		append(pieces, GamePiece{true, i})
+		pieces = append(pieces, GamePiece{true, i})
 	}
 	return pieces
 }
 
-func max(nums ...int) {
+func max(nums ...int) int {
 	n := nums[0]
 	for _, num := range nums[1:] {
 		if num > n {
 			n = num
 		}
 	}
-	return num
+	return n
 }
 
 // Get the valid pieces for a board position
@@ -170,18 +170,21 @@ func GetValidMoves(board *Board, position *BoardPosition) []GamePiece {
 	usedPieces := getUsedPieces(board)
 
 	// get the sum of each of the three rows for this position
-	horizontalRowSum := rowSum(getPrevHorizontalRowPieces(board, position))
-	leftDiagRowSum := rowSum(getPrevLeftDiagRowPieces(board, position))
-	rightDiagRowSum := rowSum(getPrevRightDiagRowPieces(board, position))
+	horizontalRowPieces := getPrevHorizontalRowPieces(board, position)
+	horizontalRowSum := rowSum(&horizontalRowPieces)
+	leftDiagRowPieces := getPrevLeftDiagRowPieces(board, position)
+	leftDiagRowSum := rowSum(&leftDiagRowPieces)
+	rightDiagRowPieces := getPrevRightDiagRowPieces(board, position)
+	rightDiagRowSum := rowSum(&rightDiagRowPieces)
 
 	// the highest of those constrains the possible pieces in this position
 	highestRowSum := max(horizontalRowSum, rightDiagRowSum, leftDiagRowSum)
-	possibleMoves = getPiecesLte(TargetRowSum - highestRowSum)
+	possibleMoves := getPiecesLte(TargetRowSum - highestRowSum)
 
 	// remove the moves we've already used
 	validMoves := []GamePiece{}
 	for _, possibleMove := range possibleMoves {
-		if usedPieces[i] {
+		if usedPieces[possibleMove.Value] {
 			continue
 		}
 		validMoves = append(validMoves, possibleMove)
@@ -190,7 +193,7 @@ func GetValidMoves(board *Board, position *BoardPosition) []GamePiece {
 	return validMoves
 }
 
-func SetPosition(board *Board, position *BoardPosition, move *GamePiece) Board {
-	board[position.Row][position.Column] = move
+func SetPosition(board *Board, position *BoardPosition, move *GamePiece) *Board {
+	board.Rows[position.Row][position.Column] = GamePiece{true, move.Value}
 	return board
 }
