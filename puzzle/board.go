@@ -45,7 +45,7 @@ func rowToString(row []GamePiece) string {
 }
 
 func BoardToString(board *Board) string {
-	spaces := []string{"  ", " ", "", " ", " "}
+	spaces := []string{"  ", " ", "", " ", "  "}
 	str := ""
 	for i, row := range board.Rows {
 		str += fmt.Sprintf("%s%s\n", spaces[i], rowToString(row))
@@ -60,7 +60,13 @@ func PrintBoard(board *Board) {
 func InitBoard() Board {
 	board := Board{}
 	for i := 0; i < 5; i++ {
-		board.Rows[i] = []GamePiece{}
+		if i == 0 || i == 4 {
+			board.Rows[i] = make([]GamePiece, 3)
+		} else if i == 1 || i == 3 {
+			board.Rows[i] = make([]GamePiece, 4)
+		} else {
+			board.Rows[i] = make([]GamePiece, 5)
+		}
 	}
 	return board
 }
