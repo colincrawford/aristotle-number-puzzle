@@ -99,7 +99,7 @@ func getPrevHorizontalRowPieces(board *Board, position *BoardPosition) []GamePie
 // The diagonal row starting from the top and going down / left
 // for a given board position
 func getPrevLeftDiagRowPieces(board *Board, position *BoardPosition) []GamePiece {
-	if position.Row == 1 {
+	if position.Row == 0 {
 		return []GamePiece{}
 	}
 
@@ -119,7 +119,7 @@ func getPrevLeftDiagRowPieces(board *Board, position *BoardPosition) []GamePiece
 // The diagonal row starting from the top and going down / right
 // for a given board position
 func getPrevRightDiagRowPieces(board *Board, position *BoardPosition) []GamePiece {
-	if position.Row == 1 {
+	if position.Row == 0 {
 		return []GamePiece{}
 	}
 
